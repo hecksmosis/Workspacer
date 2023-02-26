@@ -93,6 +93,9 @@ impl Workspaces {
     }
 
     pub fn add_to_file(&self, workspace: &Workspace) {
+        println!("Adding workspace {}", self.workspace_file.as_str());
+
+        // Open the file in append mode without using openoptions
         let mut file = fs::OpenOptions::new()
             .append(true)
             .open(self.workspace_file.as_str())
@@ -128,11 +131,11 @@ impl Workspaces {
     }
 
     pub fn remove_from_file(&mut self, workspace: &Workspace) {
-        let mut file = fs::OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .open(self.workspace_file.as_str())
-            .expect("Unable to open file");
+        println!("Removing workspace {}", self.workspace_file.as_str());
+
+        // Open the file and clear it without using openoptions
+        let mut file =
+            fs::File::create(self.workspace_file.as_str()).expect("Unable to create file");
 
         // Remove the workspace from the vector
         self.workspaces

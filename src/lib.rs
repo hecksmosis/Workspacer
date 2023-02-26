@@ -2,7 +2,6 @@ use crate::configuration::*;
 use crate::workspaces::*;
 use std::error::Error;
 
-// Create tests for add, remove and read_from_file
 pub mod configuration;
 #[cfg(test)]
 mod tests;
