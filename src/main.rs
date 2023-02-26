@@ -1,6 +1,6 @@
 use std::env;
 use std::process;
-use workspace_mgr::Config;
+use workspace_mgr::configuration::Config;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

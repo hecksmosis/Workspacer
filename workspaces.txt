@@ -1,1 +1,0 @@
-rust-workspace-manager;C:\OpenSource\workspace_mgr;code . && echo Finished!
