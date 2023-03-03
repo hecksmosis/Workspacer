@@ -2,48 +2,40 @@ use std::env;
 
 pub struct Config {
     pub command: String,
-    pub ignore_case: bool,
     pub name: Option<String>,
     pub path: Option<String>,
     pub init_commands: Option<Vec<String>>,
 }
 
 impl Config {
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 2 {
-            return Err("not enough arguments");
-        }
+    pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
+        args.next();
 
-        let command = args[1].clone();
-        let name = if args.len() > 2 {
-            Some(args[2].clone())
-        } else {
-            None
-        };
-        let path = if args.len() > 3 {
-            Some(args[3].clone())
-        } else {
-            None
-        };
-        let init_commands = if args.len() > 4 {
-            Some(
-                args[4..]
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect::<Vec<String>>(),
-            )
-        } else {
-            None
+        let command = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a command string"),
         };
 
-        let ignore_case = env::var("IGNORE_CASE").is_ok();
+        let name = match args.next() {
+            Some(arg) => Some(arg),
+            None => None,
+        };
+
+        let path = match args.next() {
+            Some(arg) => Some(arg),
+            None => None,
+        };
+
+        let init_commands = match args.next() {
+            Some(arg) => Some(arg.split(",").map(|s| s.to_string()).collect()),
+            None => None,
+        };
 
         Ok(Config {
             command,
             name,
             path,
             init_commands,
-            ignore_case,
         })
     }
 }
