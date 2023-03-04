@@ -49,6 +49,16 @@ impl Workspace {
     }
 }
 
+impl Clone for Workspace {
+    fn clone(&self) -> Self {
+        Workspace {
+            name: self.name.clone(),
+            path: self.path.clone(),
+            init_commands: self.init_commands.clone(),
+        }
+    }
+}
+
 impl PartialEq for Workspace {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name && self.path == other.path
@@ -142,6 +152,16 @@ impl Workspaces {
             ) {
                 eprintln!("Couldn't write to file: {}", e);
             }
+        }
+    }
+}
+
+impl Clone for Workspaces {
+    fn clone(&self) -> Self {
+        Workspaces {
+            active_workspace: self.active_workspace.clone(),
+            workspaces: self.workspaces.clone(),
+            workspace_file: self.workspace_file.clone(),
         }
     }
 }

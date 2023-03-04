@@ -3,8 +3,7 @@ use std::env;
 pub struct Config {
     pub command: String,
     pub name: Option<String>,
-    pub path: Option<String>,
-    pub init_commands: Option<Vec<String>>,
+    pub args: Option<Vec<String>>,
 }
 
 impl Config {
@@ -13,7 +12,7 @@ impl Config {
 
         let command = match args.next() {
             Some(arg) => arg,
-            None => return Err("Didn't get a command string"),
+            None => "help".into(),
         };
 
         let name = match args.next() {
@@ -21,12 +20,7 @@ impl Config {
             None => None,
         };
 
-        let path = match args.next() {
-            Some(arg) => Some(arg),
-            None => None,
-        };
-
-        let init_commands = match args.next() {
+        let args = match args.next() {
             Some(arg) => Some(arg.split(",").map(|s| s.to_string()).collect()),
             None => None,
         };
@@ -34,9 +28,18 @@ impl Config {
         Ok(Config {
             command,
             name,
-            path,
-            init_commands,
+            args,
         })
+    }
+}
+
+impl Clone for Config {
+    fn clone(&self) -> Self {
+        Config {
+            command: self.command.clone(),
+            name: self.name.clone(),
+            args: self.args.clone(),
+        }
     }
 }
 
