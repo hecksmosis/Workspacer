@@ -2,25 +2,39 @@ use std::env;
 use std::fmt::{Debug, Formatter};
 use std::fs;
 use std::io::prelude::*;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use crate::Shell;
 
 pub struct Workspace {
     pub name: String,
-    pub path: String,
+    pub path: PathBuf,
+    pub shell: String,
     pub init_commands: Vec<String>,
 }
 
 impl Workspace {
-    pub fn new(name: String, path: String, init_commands: Vec<String>) -> Workspace {
+    pub fn new(
+        name: String,
+        path: PathBuf,
+        shell: String,
+        init_commands: Vec<String>,
+    ) -> Workspace {
         Workspace {
             name,
             path,
+            shell,
             init_commands,
         }
     }
 
     pub fn init(&self) {
-        println!("Initializing workspace {} at {}", self.name, self.path);
+        println!(
+            "Initializing workspace {} at {}",
+            self.name,
+            self.path.display()
+        );
+
         for command in &self.init_commands {
             // run the command in the corresponding terminal to the os
             if cfg!(target_os = "windows") {
@@ -38,14 +52,9 @@ impl Workspace {
                 println!("{}", String::from_utf8_lossy(&output.stdout));
             }
         }
-    }
-
-    pub fn clone(&self) -> Workspace {
-        Workspace {
-            name: self.name.clone(),
-            path: self.path.clone(),
-            init_commands: self.init_commands.clone(),
-        }
+        // Execute an interactive shell in the workspace directory
+        let shell = Shell::new(&self.path, &self.shell);
+        shell.get_input();
     }
 }
 
@@ -54,6 +63,7 @@ impl Clone for Workspace {
         Workspace {
             name: self.name.clone(),
             path: self.path.clone(),
+            shell: self.shell.clone(),
             init_commands: self.init_commands.clone(),
         }
     }
@@ -70,6 +80,7 @@ impl Debug for Workspace {
         f.debug_struct("Workspace")
             .field("name", &self.name)
             .field("path", &self.path)
+            .field("shell", &self.shell)
             .field("init_commands", &self.init_commands)
             .finish()
     }
@@ -119,9 +130,10 @@ impl Workspaces {
 
         if let Err(e) = writeln!(
             file,
-            "{};{};{}",
+            "{};{};{};{}",
             workspace.name,
-            workspace.path,
+            workspace.path.display(),
+            workspace.shell,
             workspace.init_commands.join(";")
         ) {
             eprintln!("Couldn't write to file: {}", e);
@@ -147,7 +159,7 @@ impl Workspaces {
                 file,
                 "{};{};{}",
                 workspace.name,
-                workspace.path,
+                workspace.path.display(),
                 workspace.init_commands.join(";")
             ) {
                 eprintln!("Couldn't write to file: {}", e);
@@ -176,9 +188,15 @@ pub fn read_from_file(file_path: &str) -> Workspaces {
         let mut parts = line.split(";");
         let name = parts.next().unwrap();
         let path = parts.next().unwrap();
+        let shell = parts.next().unwrap();
         let init_commands = parts.map(|s| s.to_string()).collect();
 
-        let workspace = Workspace::new(name.to_string(), path.to_string(), init_commands);
+        let workspace = Workspace::new(
+            name.to_string(),
+            path.to_string().into(),
+            shell.to_string(),
+            init_commands,
+        );
 
         // If the current path is equal to the workspace path or is a subfolder, set it as active
         if let Ok(current_path) = env::current_dir() {

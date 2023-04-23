@@ -1,15 +1,21 @@
-use std::env;
 use std::process;
-use workspace_mgr::configuration::Config;
+use workspace_mgr::{configuration::Config, errors::Severity};
+use clap::Parser;
 
 fn main() {
-    let config = Config::build(env::args()).unwrap_or_else(|err| {
-        eprintln!("Problem parsing arguments: {err}");
-        process::exit(1);
-    });
+    // Get the command line arguments
+    let config = Config::parse();
 
+    // Run the application
     if let Err(e) = workspace_mgr::run(config) {
-        eprintln!("Application error: {e}");
+        if e.severity == Severity::Error {
+            eprintln!("Error: {e}");
+            process::exit(1);
+        } else if e.severity == Severity::Warning {
+            eprintln!("Warning: {e}");
+        } else {
+            eprintln!("{e}");
+        }
         process::exit(1);
     }
 }

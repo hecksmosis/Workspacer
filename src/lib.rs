@@ -1,31 +1,28 @@
-use crate::commands::*;
-use crate::configuration::*;
-use crate::workspaces::*;
-use std::error::Error;
+pub use crate::commands::*;
+pub use crate::configuration::*;
+pub use crate::errors::*;
+pub use crate::shell::*;
+pub use crate::workspaces::*;
 
 pub mod commands;
 pub mod configuration;
+pub mod errors;
+pub mod shell;
+
+// Set up general tests
 #[cfg(test)]
 mod tests;
 pub mod workspaces;
 
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let file_config = FileConfig::build(false)?;
+pub fn run(config: Config) -> Result<(), WorkspaceError> {
+    let file_config = match FileConfig::build() {
+        Ok(val) => val,
+        Err(err) => return Err(WorkspaceError::new(err, Severity::Error)),
+    };
 
-    let workspaces = Workspaces::new(
-        file_config
-            .workspaces_file
-            .expect("Environment variable WORKSPACE_FILE not set")
-            .as_str(),
-    );
+    // Initialize workspaces
+    let workspaces = Workspaces::new(file_config.workspaces_file.as_str());
 
-    let mut command_manager =
-        match CommandConfigurator::build(serialize_commands(), workspaces, config.clone()) {
-            Some(command_manager) => command_manager,
-            None => return Err("No commands found".into()),
-        };
-
-    command_manager.run(config.command);
-
-    Ok(())
+    // Initialize command
+    return Command::run(workspaces, config.command.clone()).into();
 }
